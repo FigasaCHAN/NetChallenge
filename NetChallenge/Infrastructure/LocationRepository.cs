@@ -6,14 +6,15 @@ namespace NetChallenge.Infrastructure
 {
     public class LocationRepository : ILocationRepository
     {
+        private List<Location> _repository = new List<Location>() { };
         public IEnumerable<Location> AsEnumerable()
         {
-            throw new System.NotImplementedException();
+            return _repository;
         }
 
         public void Add(Location item)
         {
-            throw new System.NotImplementedException();
+            _repository.Add(item);
         }
     }
 }
