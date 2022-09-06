@@ -7,7 +7,7 @@ namespace NetChallenge.Domain
         private TimeSpan _duration;
         private static readonly TimeSpan MIN_DURATION = new TimeSpan(00,00,00); //TimeSpan hh-mm-ss
 
-        public Office Office { get; set; }
+        public string OfficeName { get; set; }
 
         public DateTime DateTime { get; set; }
         public TimeSpan Duration

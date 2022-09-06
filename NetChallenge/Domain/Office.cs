@@ -12,7 +12,7 @@ namespace NetChallenge.Domain
         private const int MIN_RESOURCES = 0;
 
 
-        public Location Location { get; set; }
+        public string LocationName { get; set; }
         public string Name
         {
             get { return _name; }

@@ -7,6 +7,7 @@ namespace NetChallenge.Domain
     {
         private string _name;
         private string _neighborhood;
+
         public string Name
         {
             get { return _name; }
@@ -27,7 +28,7 @@ namespace NetChallenge.Domain
             }
         }
 
-        public IEnumerable<Office> Offices { get; set; }
+        public IEnumerable<string> Offices { get; set; }
 
     }
 }
