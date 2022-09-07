@@ -27,14 +27,23 @@ namespace NetChallenge
 
             bool exists = (from location in locations where location.Name == request.Name select location).FirstOrDefault() != null;
 
-            if (exists ) throw new Exception("The location entered already exists");
+            if (exists) throw new Exception("The location entered already exists");
 
             _locationRepository.Add(new Location() { Name = request.Name, Neighborhood = request.Neighborhood });
         }
 
         public void AddOffice(AddOfficeRequest request)
         {
-            throw new NotImplementedException();
+            IEnumerable<Location> locations = _locationRepository.AsEnumerable();
+
+            bool existsLocation = (from location in locations where location.Name == request.LocationName select location).FirstOrDefault() != null;
+            if (!existsLocation) throw new Exception("The location does not exist");
+
+            IEnumerable<Office> offices = _officeRepository.AsEnumerable();
+            bool existsOffice = (from office in offices where office.Name == request.Name && office.LocationName == request.LocationName select office).FirstOrDefault() != null;
+            if (existsOffice) throw new Exception("The office entered already exists");
+
+            _officeRepository.Add(new Office() { LocationName = request.LocationName, Name = request.Name, MaxCapacity = request.MaxCapacity, AvailableResources = (string[]) request.AvailableResources  });; 
         }
 
         public void BookOffice(BookOfficeRequest request)
@@ -59,7 +68,17 @@ namespace NetChallenge
 
         public IEnumerable<OfficeDto> GetOffices(string locationName)
         {
-            throw new NotImplementedException();
+   
+            List<OfficeDto> officesDTO = new List<OfficeDto>();
+            var offices = _officeRepository.AsEnumerable();
+
+            var filterOffices = from office in offices where office.LocationName == locationName select office;
+
+            foreach (var item in filterOffices)
+            {
+                officesDTO.Add(new OfficeDto() { LocationName = item.LocationName, Name = item.Name, MaxCapacity = item.MaxCapacity, AvailableResources = item.AvailableResources} );
+            }
+            return officesDTO;
         }
 
         public IEnumerable<OfficeDto> GetOfficeSuggestions(SuggestionsRequest request)
