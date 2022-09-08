@@ -48,12 +48,44 @@ namespace NetChallenge
 
         public void BookOffice(BookOfficeRequest request)
         {
-            throw new NotImplementedException();
+            
+            IEnumerable<Booking> bookings = _bookingRepository.AsEnumerable(); 
+            var offices = GetOffices(request.LocationName);
+
+            var officeFilter = (from office in offices where office.Name == request.OfficeName && office.LocationName == request.LocationName select office);
+
+            bool existsOffice = officeFilter.FirstOrDefault() != null;
+            if (!existsOffice) throw new Exception("The office does not exist");
+
+
+            var officeBookings = GetBookings(request.LocationName, request.OfficeName);
+
+            var overwriteBookings = (from booking in officeBookings 
+                          where (booking.DateTime >= request.DateTime && booking.DateTime < request.DateTime.Add(request.Duration) ) || 
+                          (request.DateTime >= booking.DateTime && request.DateTime < booking.DateTime.Add(booking.Duration))
+                          select booking);
+
+            bool isOverwrite = overwriteBookings.FirstOrDefault() != null;
+            if(isOverwrite) throw new Exception("The office is already reserved");
+            _bookingRepository.Add(new Booking() { LocationName = request.LocationName, UserName = request.UserName, OfficeName = request.OfficeName, DateTime = request.DateTime, Duration = request.Duration  } );
+
         }
 
         public IEnumerable<BookingDto> GetBookings(string locationName, string officeName)
         {
-            throw new NotImplementedException();
+            List<BookingDto> bookingDtos = new List<BookingDto>();
+
+            var bookings = _bookingRepository.AsEnumerable();
+
+            var filterBookings = (from booking in bookings where booking.LocationName == locationName && booking.OfficeName == officeName select booking);
+
+            foreach (var item in filterBookings)
+            {
+                bookingDtos.Add(new BookingDto() { LocationName = item.LocationName, OfficeName = item.OfficeName, UserName = item.UserName, DateTime = item.DateTime, Duration = item.Duration} );
+            }
+
+
+            return bookingDtos;
         }
 
         public IEnumerable<LocationDto> GetLocations()
