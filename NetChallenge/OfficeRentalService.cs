@@ -35,15 +35,14 @@ namespace NetChallenge
         public void AddOffice(AddOfficeRequest request)
         {
             IEnumerable<Location> locations = _locationRepository.AsEnumerable();
-
-            bool existsLocation = (from location in locations where location.Name == request.LocationName select location).FirstOrDefault() != null;
-            if (!existsLocation) throw new Exception("The location does not exist");
+            var foundLocation = (from location in locations where location.Name == request.LocationName select location).FirstOrDefault();
+            if (foundLocation == null) throw new Exception("The location does not exist");
 
             IEnumerable<Office> offices = _officeRepository.AsEnumerable();
-            bool existsOffice = (from office in offices where office.Name == request.Name && office.LocationName == request.LocationName select office).FirstOrDefault() != null;
+            bool existsOffice = (from office in offices where office.Name == request.Name && office.Location.Name == request.LocationName select office).FirstOrDefault() != null;
             if (existsOffice) throw new Exception("The office entered already exists");
 
-            _officeRepository.Add(new Office() { LocationName = request.LocationName, Name = request.Name, MaxCapacity = request.MaxCapacity, AvailableResources = (string[]) request.AvailableResources  });; 
+            _officeRepository.Add(new Office() { Location = foundLocation , Name = request.Name, MaxCapacity = request.MaxCapacity, AvailableResources = (string[]) request.AvailableResources  });; 
         }
 
         public void BookOffice(BookOfficeRequest request)
@@ -60,14 +59,17 @@ namespace NetChallenge
 
             var officeBookings = GetBookings(request.LocationName, request.OfficeName);
 
+            //overwriteBookings find a  ( x.DateTime ∈ [y.Datetime, y.Datetime + y.Duration] || y.DateTime ∈ [x.Datetime, x.Datetime + x.Duration] )
             var overwriteBookings = (from booking in officeBookings 
                           where (booking.DateTime >= request.DateTime && booking.DateTime < request.DateTime.Add(request.Duration) ) || 
                           (request.DateTime >= booking.DateTime && request.DateTime < booking.DateTime.Add(booking.Duration))
                           select booking);
 
             bool isOverwrite = overwriteBookings.FirstOrDefault() != null;
-            if(isOverwrite) throw new Exception("The office is already reserved");
-            _bookingRepository.Add(new Booking() { LocationName = request.LocationName, UserName = request.UserName, OfficeName = request.OfficeName, DateTime = request.DateTime, Duration = request.Duration  } );
+            if (isOverwrite) throw new Exception("The office is already reserved");
+            
+            var foundLocation = (from location in _locationRepository.AsEnumerable() where location.Name == request.LocationName select location).FirstOrDefault(); //If the office exists then the location exists
+            _bookingRepository.Add(new Booking() { Location = foundLocation, UserName = request.UserName, OfficeName = request.OfficeName, DateTime = request.DateTime, Duration = request.Duration  } );
 
         }
 
@@ -77,11 +79,11 @@ namespace NetChallenge
 
             var bookings = _bookingRepository.AsEnumerable();
 
-            var filterBookings = (from booking in bookings where booking.LocationName == locationName && booking.OfficeName == officeName select booking);
+            var filterBookings = (from booking in bookings where booking.Location.Name == locationName && booking.OfficeName == officeName select booking);
 
             foreach (var item in filterBookings)
             {
-                bookingDtos.Add(new BookingDto() { LocationName = item.LocationName, OfficeName = item.OfficeName, UserName = item.UserName, DateTime = item.DateTime, Duration = item.Duration} );
+                bookingDtos.Add(new BookingDto() { LocationName = item.Location.Name, OfficeName = item.OfficeName, UserName = item.UserName, DateTime = item.DateTime, Duration = item.Duration} );
             }
 
 
@@ -104,18 +106,28 @@ namespace NetChallenge
             List<OfficeDto> officesDTO = new List<OfficeDto>();
             var offices = _officeRepository.AsEnumerable();
 
-            var filterOffices = from office in offices where office.LocationName == locationName select office;
+            var filterOffices = from office in offices where office.Location.Name == locationName select office;
 
             foreach (var item in filterOffices)
             {
-                officesDTO.Add(new OfficeDto() { LocationName = item.LocationName, Name = item.Name, MaxCapacity = item.MaxCapacity, AvailableResources = item.AvailableResources} );
+                officesDTO.Add(new OfficeDto() { LocationName = item.Location.Name, Name = item.Name, MaxCapacity = item.MaxCapacity, AvailableResources = item.AvailableResources} );
             }
             return officesDTO;
         }
 
         public IEnumerable<OfficeDto> GetOfficeSuggestions(SuggestionsRequest request)
         {
-            throw new NotImplementedException();
+            //TODO Implement
+            throw new Exception("Implement");
+        }
+        private bool prueba (Office value, IEnumerable<string> array)
+        {
+            bool todos = true;
+            foreach (var item in array)
+            {
+                todos = todos && value.AvailableResources.Contains(item);
+            }
+            return todos;
         }
     }
 }

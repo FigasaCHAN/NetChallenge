@@ -8,7 +8,7 @@ namespace NetChallenge.Domain
         private string _userName;
         private static readonly TimeSpan MIN_DURATION = new TimeSpan(00,00,00); //TimeSpan hh-mm-ss
 
-        public string LocationName { get; set; }
+        public Location Location { get; set; }
         public string OfficeName { get; set; }
 
         public DateTime DateTime { get; set; }
