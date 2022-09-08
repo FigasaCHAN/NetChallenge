@@ -117,17 +117,41 @@ namespace NetChallenge
 
         public IEnumerable<OfficeDto> GetOfficeSuggestions(SuggestionsRequest request)
         {
-            //TODO Implement
-            throw new Exception("Implement");
+            List<OfficeDto> officeDtos = new List<OfficeDto>();
+
+            var offices = _officeRepository.AsEnumerable();
+
+            var filterOfficeByCountResources = (from office in offices where office.AvailableResources.Length >= request.ResourcesNeeded.Count() select office);
+            var filterOfficeByMaxCant = filterOfficeByCountResources.Where (x => request.CapacityNeeded <= x.MaxCapacity); 
+            var filterOfficeByResources = filterOfficeByMaxCant.Where(x => helperAllElementsInArray( x ,request.ResourcesNeeded) );
+
+            var orderByCapacity = filterOfficeByResources.OrderBy(x => x.MaxCapacity);
+            var orderByResourcesNeeded = orderByCapacity.OrderBy(x => x.AvailableResources.Count() - request.ResourcesNeeded.Count() );
+            var orderByNeighborhood = orderByResourcesNeeded.OrderBy(x => (x.Location.Neighborhood.Equals(request.PreferedNeigborHood) ? -1 : 1));
+            
+
+            foreach (var item in orderByNeighborhood)
+            {
+                officeDtos.Add(new OfficeDto() { 
+                    LocationName = item.Location.Name,
+                    Name = item.Name,
+                    AvailableResources = item.AvailableResources,
+                    MaxCapacity = item.MaxCapacity
+                });
+            }
+
+            return officeDtos;
+
         }
-        private bool prueba (Office value, IEnumerable<string> array)
+
+        private bool helperAllElementsInArray (Office value, IEnumerable<string> array)
         {
-            bool todos = true;
+            bool isAllInArray = true;
             foreach (var item in array)
             {
-                todos = todos && value.AvailableResources.Contains(item);
+                isAllInArray = isAllInArray && value.AvailableResources.Contains(item);
             }
-            return todos;
+            return isAllInArray;
         }
     }
 }
